@@ -1,8 +1,10 @@
 # CS 237 Final Project
 
+## Multimedia-based load balancing algorithms
+
 ## Load Balancing using spring cloud ribbon and eureka
 
-*amazon-server*, *amazon-shooping* and *payment-service* are 3 services directoriese to implement load balancing using spring cloud ribbon and eurek. The original code is referenced from [Spring Cloud- Load Balancing using Netflix Ribbon + Eureka | Spring Boot](https://www.youtube.com/watch?v=_e97OLyEEiA) and [Client side Load Balancer using Spring Cloud Ribbon | Spring Boot](https://www.youtube.com/watch?v=ueyVjOnDHYQ)
+*amazon-server*, *amazon-shooping* and *payment-service* are 3 services directoriese to implement load balancing using spring cloud ribbon and eurek. The **original code** is referenced from [Spring Cloud- Load Balancing using Netflix Ribbon + Eureka | Spring Boot](https://www.youtube.com/watch?v=_e97OLyEEiA) and [Client side Load Balancer using Spring Cloud Ribbon | Spring Boot](https://www.youtube.com/watch?v=ueyVjOnDHYQ)
 
 
 #### Other References
