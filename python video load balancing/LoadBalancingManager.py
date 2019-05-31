@@ -1,17 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import server
+import random
 
 class LoadBalancingManager:
-    def __init__(self, initServer):
+    def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound):
         self.time = 0
-        self.serverList = [server(20, 20, 20)] * initServer
-        self.numberOfServer = initServer
+        self.serverList = [server(20, 20, 20)] * numberOfServer
+        self.numberOfServer = numberOfServer
+        self.numberOfMovie = numberOfMovie
         
         # create movieId to list of server mapping <int, vector<int>>
         self.movieIdTable = dict()
         
-    #
+        # distribute movies to servers (location and size of movie are randomly distributed)
+        self.distributedMovie(movieSizeLowerBound, movieSizeUpperBound)
+    
+    def distributedMovie(self, movieSizeLowerBound, movieSizeUpperBound):
+        for i in self.numberOfMovie:
+            sv = random.randint(0, self.numberOfServer)
+            self.serverList[sv].insertMovie(i, random.randint(movieSizeLowerBound, movieSizeUpperBound))
+            
+            # record in movieIdTable
+            self.movieIdTable[i] = [sv] 
         
     
     def updateLoad(self):
@@ -33,6 +44,11 @@ class LoadBalancingManager:
         return cnt/self.movieIdTable.size()
     
     
+    ### TODO: distribute movies to servers ###
+    def movieRequest(self, movieID, load):
+        return False
+    
+    
     
     
     # every second, store/ update load from every server
@@ -52,7 +68,7 @@ class LoadBalancingManager:
         # udpate cache table
 
     # main: 
-        # send movieRequest to loadbalancingManager
+        # send movieRequest to loadbalancingManager (number of movie, number of server)
     
     # duplication
         # server crash
