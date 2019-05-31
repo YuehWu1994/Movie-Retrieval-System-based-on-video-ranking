@@ -4,13 +4,22 @@
 
 import os
 import numpy as np
+import heapq
+
 
 class Server:
-    def __init__(self, movieCapacity, serverDiskCapacity):
+    def __init__(self, movieCapacity, serverDiskCapacity, loadCapacity, t):
+        self.loadCapacity = loadCapacity              # upper bound of load
         self.serverDiskCapacity = serverDiskCapacity  # upper bound of disk size 
         self.movieCapacity = movieCapacity            # upper bound of number of movie 
+        
+        self.load = 0                                 # current load
         self.totalSize = 0                     
         self.numberOfMovie = 0
+        
+        self.curTime = t
+        self.q = []                                   # use queue to store accessing time
+        
         self.id2Idx = dict()                          # map movie id to array index 
         self.idx2Id = [0] * movieCapacity             # map array index to movie id   
         self.accessReq = [0] * movieCapacity          # number of access
@@ -25,7 +34,7 @@ class Server:
         
     
     # assign movie to this server
-    def assignMovie(self, movieId, movieSize):
+    def insertMovie(self, movieId, movieSize):
         # if exceed the movie capacity and total length of movie
         if self.numberOfMovie == self.movieCapacity or self.aveSizeVideo * self.numberOfMovie + movieSize > self.serverDiskCapacity:
             return False
@@ -68,16 +77,37 @@ class Server:
         
     
     # access the movie by bandwidth and movieID
-    def accessTheMovie(self, movieId, bandwidth):
+    def accessMovie(self, movieId, bandwidth, load):
         # if the movie doesn't exist in the server
         if movieId in self.id.keys():
             return False
         
+        # if exceed the load
+        if self.load + load > self.loadCapacity:
+            return False
+    
+        
         movieIdx = self.id2Idx[movieId]
+        
+        heapq.heappush((self.q, self.curTime + int(self.sizeOfMovie[movieIdx]/load)+1), load)
+        
+        self.load += load
         self.accessReq[movieIdx] += 1
         self.bandwidth[movieIdx] += bandwidth
         self.aveBandwidth = self.aveBandwidth + bandwidth/self.numberOfMovie
         return True
+    
+    def updateLoad(self):
+        self.curTime += 1
+        
+        while not self.q.empty() and self.q[0] < self.curTime:
+            self.load -= self.q[0][1]
+            heapq.heappop(self.q)
+            
+        return self.q.size()
+            
+        
+        
     
 
         
