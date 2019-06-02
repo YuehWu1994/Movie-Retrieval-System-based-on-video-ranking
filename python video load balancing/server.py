@@ -173,7 +173,7 @@ class Server:
         return len(self.q)
     
     # exchange the lowest rank movie in cache with the highest rank movie in disk
-    def updataCache(self):
+    def updateCache(self):
         ## x,y are movie ID
         x = self.rank[0] 
         y = self.cacheRank[self.numberOfCacheMovie-1]

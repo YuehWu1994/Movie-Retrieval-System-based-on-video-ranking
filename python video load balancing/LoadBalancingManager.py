@@ -40,7 +40,7 @@ class LoadBalancingManager:
         # update ranking and cache for each server
         for sv in self.serverList:
             sv.updateRanking()
-            sv.updataCache()
+            sv.updateCache()
 
         # update cacheTable
         self.cacheTable = dict()
