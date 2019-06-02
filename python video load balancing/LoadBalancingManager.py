@@ -27,9 +27,10 @@ class LoadBalancingManager:
         
 
     def updateTime(self):
-        print("Current Time is: ", self.time)
         self.time +=1
         for sv in self.serverList: sv.curTime+=1
+        
+        print("Current Time is: ", self.time)
 
     def update(self):
         # update ranking and cache for each server
@@ -100,6 +101,8 @@ class LoadBalancingManager:
     
     
     def movieRequest(self, movieID, load):
+        print("Load of request is: ", load)
+        
         # Check if the cache in the server has the requested movie
         if movieID in self.cacheTable:
             minload=sys.maxsize
@@ -109,7 +112,8 @@ class LoadBalancingManager:
                 if self.serverList[sv].load < minload:
                     minload=self.serverList[sv].load
                     target_sv=sv
-            if not target_sv == None and self.serverList[target_sv].accessMovie(movieID, load, 30*load):
+            if not target_sv == None and self.serverList[target_sv].accessMovie(movieID, load, load):
+                print("Server ", target_sv, " use cache to transmit")
                 return True
 
         # Check if any server could handle the requested movie
@@ -121,7 +125,9 @@ class LoadBalancingManager:
                 minload=self.serverList[sv].load
                 target_sv=sv
         if not target_sv == None and self.serverList[target_sv].accessMovie(movieID, load, load):
-                return True
+            print("Server ", target_sv, " use disk to transmit")
+            return True
+        
         return False
     
     # every second, store/ update load from every server

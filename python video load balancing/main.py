@@ -31,13 +31,17 @@ if __name__ == "__main__":
 
     req = args.numRequest
     for i in range(req):
+        print("Request: ", i)
+        
         # update loadBalanceManager
         if lbm.time >= lbm.timeToUpdate: lbm.update()
         while not lbm.movieRequest(random.randrange(0, args.numMovie), random.randrange(0, args.loadUpperBound)):
             lbm.updateTime()
             lbm.updateLoad()
         lbm.updateTime()
-
-    while not lbm.updateLoad(): lbm.updateTime()
         
-    print("Take " + lbm.time + "time unit to finish " +  req + " movie requests")
+        print('\n')
+
+    while lbm.updateLoad(): lbm.updateTime()
+        
+    print("Take ", lbm.time, " time unit to finish ", req, " movie requests")

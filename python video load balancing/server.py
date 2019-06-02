@@ -129,7 +129,7 @@ class Server:
         
         ## if the movie does exist in the server cache
         if movieId in self.id2CacheIdx.keys():
-            self.accessCacheMovie(movieId, loadSpeed, loadSpeed * self.cacheDiskSpeedRatio)
+            self.accessCacheMovie(movieId, loadSpeed, loadSpeed)
             return True
         ## if the movie doesn't exist in the server
         if movieId not in self.id2Idx.keys():
@@ -163,6 +163,7 @@ class Server:
             self.load -= self.q[0][1]
             heapq.heappop(self.q)
             
+        print(len(self.q))
         return len(self.q)
     
     # exchange the lowest rank movie in cache with the highest rank movie in disk
