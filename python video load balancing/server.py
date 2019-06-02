@@ -25,6 +25,7 @@ class Server:
         self.totalCacheSize = 0                        ##
         self.numberOfMovie = 0
         self.numberOfCacheMovie = 0                    ##
+        self.cacheDiskSpeedRatio = 30                   # assuem cache transmission speed is 30 times faster than disk
         
         self.curTime = t
         self.q = []                                     # use queue to store accessing time
@@ -128,7 +129,7 @@ class Server:
         
         ## if the movie does exist in the server cache
         if movieId in self.id2CacheIdx.keys():
-            self.accessCacheMovie(movieId, loadSpeed)
+            self.accessCacheMovie(movieId, loadSpeed, loadSpeed * self.cacheDiskSpeedRatio)
             return True
         ## if the movie doesn't exist in the server
         if movieId not in self.id2Idx.keys():
@@ -137,7 +138,7 @@ class Server:
         
         movieIdx = self.id2Idx[movieId]
         
-        heapq.heappush((self.q, self.curTime + int(self.sizeOfMovie[movieIdx]/loadSpeed)+1), loadSpeed)
+        heapq.heappush(self.q, (self.curTime + int(self.sizeOfMovie[movieIdx]/loadSpeed)+1, loadSpeed))
         
         self.load += loadSpeed
         self.accessReq[movieIdx] += 1
@@ -149,20 +150,20 @@ class Server:
     def accessCacheMovie(self, movieId, bandwidth, loadSpeed):
         movieIdx = self.id2CacheIdx[movieId]
         
-        heapq.heappush((self.q, self.curTime + int(self.sizeOfCacheMovie[movieIdx]/loadSpeed)+1), loadSpeed)
+        heapq.heappush(self.q, (self.curTime + int(self.sizeOfCacheMovie[movieIdx]/loadSpeed)+1, loadSpeed))
         
         self.load += loadSpeed
         self.accessCacheReq[movieIdx] += 1
         self.cachebandwidth[movieIdx] += bandwidth
-        self.avecacheBandwidth = self.avecacheBandwidth + bandwidth/self.numberOfcacheMovie
+        self.aveCacheBandwidth = self.aveCacheBandwidth + bandwidth/self.numberOfCacheMovie
         
         
     def updateLoad(self):
-        while not self.q.empty() and self.q[0] <= self.curTime:
+        while len(self.q) > 0 and self.q[0][0] <= self.curTime:
             self.load -= self.q[0][1]
             heapq.heappop(self.q)
             
-        return self.q.size()
+        return len(self.q)
     
     # exchange the lowest rank movie in cache with the highest rank movie in disk
     def updataCache(self):
@@ -196,4 +197,3 @@ class Server:
         temp = self.bandwidth[idxx]
         self.bandwidth[idxx] = self.cachebandwidth[idxy]
         self.cachebandwidth = temp
-
