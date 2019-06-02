@@ -6,7 +6,7 @@ import sys
 
 class LoadBalancingManager:
     def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound):
-        self.serverList = [Server(20, 20, 20)] * numberOfServer
+        self.serverList = [Server(20, 50000, 500, 0)] * numberOfServer
         self.numberOfServer = numberOfServer
         self.numberOfMovie = numberOfMovie
         self.time = 0
@@ -24,12 +24,14 @@ class LoadBalancingManager:
         
         # distribute movies to servers (location and size of movie are randomly distributed)
         self.distributedMovie(movieSizeLowerBound, movieSizeUpperBound)
+        
 
-    def updateTime():
-        self.time+=1
+    def updateTime(self):
+        print("Current Time is: ", self.time)
+        self.time +=1
         for sv in self.serverList: sv.curTime+=1
 
-    def update():
+    def update(self):
         # update ranking and cache for each server
         for sv in self.serverList:
             sv.updateRanking()
@@ -48,21 +50,22 @@ class LoadBalancingManager:
         self.replicateMovie()
         self.timeToUpdate+=self.updateRate
 
-    def replicateMovie():
+    def replicateMovie(self):
         for sv in self.serverList:
             hotMovieId=sv.rank[0]
-            svId = random.randint(0, self.numberOfServer)
+            svId = random.randrange(0, self.numberOfServer)
             self.serverList[svId].insertMovie(hotMovieId, self.movies[hotMovieId])
 
     def distributedMovie(self, movieSizeLowerBound, movieSizeUpperBound):
-        for i in self.numberOfMovie:
-            sv = random.randint(0, self.numberOfServer)
+        for i in range (self.numberOfMovie):
+            sv = random.randrange(0, self.numberOfServer)
 
-            movieSize=random.randint(movieSizeLowerBound, movieSizeUpperBound)
+            movieSize=random.randrange(movieSizeLowerBound, movieSizeUpperBound)
 
+            print("Movie ", i, " is located in server: ", sv)
             # insert the movie to the appropraite server.
             while not self.serverList[sv].insertMovie(i, movieSize):
-                sv = random.randint(0, self.numberOfServer)
+                sv = random.randrange(0, self.numberOfServer)
 
             # record the movie
             self.movies[i]=movieSize
@@ -74,12 +77,14 @@ class LoadBalancingManager:
             if i in self.serverList[sv].id2CacheIdx:
                 self.cacheTable[i] = [sv]
         
+        print("Distribute Movie: DONE")
+        
     
     def updateLoad(self):
         hasLoad = False
         
-        for i in self.numberOfServer:
-            if(self.serverList.updateLoad() > 0):
+        for i in range (self.numberOfServer):
+            if(self.serverList[i].updateLoad() > 0):
                 hasLoad = True
                 
         return hasLoad
@@ -94,29 +99,28 @@ class LoadBalancingManager:
         return cnt/self.movieIdTable.size()
     
     
-    ### TODO: distribute movies to servers ###
     def movieRequest(self, movieID, load):
         # Check if the cache in the server has the requested movie
-        if movieId in self.cacheTable:
+        if movieID in self.cacheTable:
             minload=sys.maxsize
             target_sv=None
             # Get the server that has minimum load
-            for sv in self.cacheTable[movieId]:
-                if sv.load < minload:
-                    minload=sv.load
+            for sv in self.cacheTable[movieID]:
+                if self.serverList[sv].load < minload:
+                    minload=self.serverList[sv].load
                     target_sv=sv
-            if not target_sv == None and target_sv.accessMovie(movieID, load, 30*load):
+            if not target_sv == None and self.serverList[target_sv].accessMovie(movieID, load, 30*load):
                 return True
 
         # Check if any server could handle the requested movie
         minload=sys.maxsize
         target_sv=None
         # Get the server that has minimum load
-        for sv in self.movieIdTable[movieId]:
-            if sv.load < minload:
-                minload=sv.load
+        for sv in self.movieIdTable[movieID]:
+            if self.serverList[sv].load < minload:
+                minload=self.serverList[sv].load
                 target_sv=sv
-        if not target_sv == None and target_sv.accessMovie(movieID, load, load):
+        if not target_sv == None and self.serverList[target_sv].accessMovie(movieID, load, load):
                 return True
         return False
     
@@ -154,7 +158,3 @@ class LoadBalancingManager:
     # request access time 1 
         
             
-        
-        
-        
-        
