@@ -116,7 +116,6 @@ class Server:
             return False
         
         # update bandwidth
-        print(self.numberOfMovie, self.movieCapacity)
         for i in range(self.numberOfMovie):
             self.bandwidth[i] = self.sizeOfMovie[i] * 100 / self.aveSizeVideo * self.aveBandwidth
         
@@ -154,7 +153,7 @@ class Server:
     def accessCacheMovie(self, movieId, bandwidth, loadSpeed):
         movieIdx = self.id2CacheIdx[movieId]
         
-        print(self.sizeOfCacheMovie)
+        #print(self.sizeOfCacheMovie)
         heapq.heappush(self.q, (self.curTime + int(self.sizeOfCacheMovie[movieIdx]/loadSpeed)+1, loadSpeed))
         
         self.load += loadSpeed
@@ -168,7 +167,6 @@ class Server:
             self.load -= self.q[0][1]
             heapq.heappop(self.q)
             
-        print(len(self.q))
         return len(self.q)
     
     # exchange the lowest rank movie in cache with the highest rank movie in disk

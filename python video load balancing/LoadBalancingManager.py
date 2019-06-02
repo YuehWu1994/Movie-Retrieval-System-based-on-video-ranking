@@ -105,9 +105,12 @@ class LoadBalancingManager:
         hasLoad = False
         
         for i in range (self.numberOfServer):
-            if(self.serverList[i].updateLoad() > 0):
+            unFinishLoad = self.serverList[i].updateLoad()
+            if(unFinishLoad > 0):
+                print("server ", i, " still has ", unFinishLoad, " load")
                 hasLoad = True
-                
+        
+        print("\n")        
         return hasLoad
     
     def getNumberOfServer(self):
