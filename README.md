@@ -1,6 +1,15 @@
 # CS 237 Final Project
 
-## Multimedia-based load balancing algorithms
+## Python Video Load Balancing
+#### How To Run
+1. Go to */python Video Load Balancing*
+2. Run the following command
+```haskell =
+	python main.py -c config/config.txt
+```
+
+#### How to change arguments
+1. Go to */python Video Load Balancing/config/config.txt*
 
 
 ## Load Balancing using spring cloud ribbon and eureka

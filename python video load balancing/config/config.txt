@@ -1,6 +1,6 @@
-numServer = 2
-numMovie = 10
-numRequest = 10
+numServer = 10
+numMovie = 100
+numRequest = 100
 movieSizeUpperBound = 5000
 movieSizeLowerBound = 1000
-loadUpperBound = 500
+loadUpperBound = 200

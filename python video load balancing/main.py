@@ -15,13 +15,13 @@ from LoadBalancingManager import LoadBalancingManager as LBM
 def _parse_args():
     p = configargparse.ArgParser()
     p.add('-c', '--config',required=False, is_config_file=True, help='config file path')
-    p.add('--numServer',required=False, default=2, help='number of server')
-    p.add('--numMovie', required=False, default=10, help="number of movie")
-    p.add('--numRequest', required=False, default=10, help="number of movie access request")
+    p.add('--numServer',type=int, required=False, default=2, help='number of server')
+    p.add('--numMovie', type=int, required=False, default=30, help="number of movie")
+    p.add('--numRequest', type=int, required=False, default=30, help="number of movie access request")
     
-    p.add('--movieSizeUpperBound', required=False, default=5000, help="upper bound of requesting load")
-    p.add('--movieSizeLowerBound', required=False, default=1000, help="lower bound of requesting load")
-    p.add('--loadUpperBound', required=False, default=200, help="upper bound of requesting load")
+    p.add('--movieSizeUpperBound', type=int, required=False, default=5000, help="upper bound of requesting load")
+    p.add('--movieSizeLowerBound', type=int, required=False, default=1000, help="lower bound of requesting load")
+    p.add('--loadUpperBound', type=int, required=False, default=200, help="upper bound of requesting load")
     args = p.parse_args()
     return args
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         
         # update loadBalanceManager
         if lbm.time >= lbm.timeToUpdate: lbm.update()
-        while not lbm.movieRequest(random.randrange(0, args.numMovie), random.randrange(0, args.loadUpperBound)):
+        while not lbm.movieRequest(random.randrange(0, args.numMovie), random.randrange(1, args.loadUpperBound)):
             lbm.updateTime()
             lbm.updateLoad()
         lbm.updateTime()

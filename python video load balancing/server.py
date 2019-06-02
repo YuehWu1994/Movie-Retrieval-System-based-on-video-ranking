@@ -3,6 +3,7 @@
 
 
 import heapq
+import functools
 
 
 # server
@@ -17,7 +18,7 @@ class Server:
         self.loadCapacity = loadCapacity                # upper bound of load
         self.serverDiskCapacity = serverDiskCapacity    # upper bound of disk size 
         self.movieCapacity = movieCapacity              # upper bound of number of movie 
-        self.serverCacheCapacity = 100                 ## upper bound of cache size
+        self.serverCacheCapacity = 10000               ## upper bound of cache size
         self.movieCacheCapacity = 10                   ## upper bound of number of movie 
         
         self.load = 0                                   # current load
@@ -40,7 +41,7 @@ class Server:
         self.aveBandwidth = 0                           # average bandwidth of video
         
         self.id2CacheIdx = dict()                       ## map movie id to array cache index
-        self.cacheIdx2Id = [0] * self.movieCacheCapacity     ## map array cache index to movie id 
+        self.idx2CacheId = [0] * self.movieCacheCapacity     ## map array cache index to movie id 
         self.accessCacheReq = [0] * self.movieCacheCapacity  ## number of access
         self.cacheRank = []                             ## ranking of movie 
         self.sizeOfCacheMovie = [0] * self.movieCacheCapacity## size of each movie
@@ -54,12 +55,13 @@ class Server:
     # assign movie to this server
     def insertMovie(self, movieId, movieSize):
         
+        
         ## if the movie already exists in the server
         if movieId in self.id2Idx.keys() or movieId in self.id2CacheIdx.keys():
             return False
         
-        ## if exceed cache hase space 
-        if self.numberOfCacheMovie == self.movieCacheCapacity or self.aveCacheSizeVideo * self.numberOfCacheMovie + movieSize > self.serverCacheCapacity:
+        ## if  cache has space 
+        if self.numberOfCacheMovie < self.movieCacheCapacity and self.aveCacheSizeVideo * self.numberOfCacheMovie + movieSize <= self.serverCacheCapacity:
             self.insertMovieInCache(movieId, movieSize)
             return True
         
@@ -79,12 +81,13 @@ class Server:
         
         self.numberOfMovie += 1
         
+        
         return True
     
     def insertMovieInCache(self, movieId, movieSize):
         ## First In First cache 
         self.id2CacheIdx[movieId] = self.numberOfCacheMovie 
-        self.cacheIdx2Id[self.numberOfCacheMovie] = movieId
+        self.idx2CacheId[self.numberOfCacheMovie] = movieId
         
         self.cacheRank += [movieId]
         self.sizeOfMovie[self.numberOfCacheMovie] = movieSize
@@ -93,7 +96,9 @@ class Server:
         self.aveCacheSizeVideo = (self.aveCacheSizeVideo * self.numberOfCacheMovie + movieSize) / (self.numberOfCacheMovie + 1)
         self.aveCacheBandwidth = (self.aveCacheBandwidth * self.numberOfCacheMovie) / (self.numberOfCacheMovie + 1)
         
+        self.numberOfMovie += 1
         self.numberOfCacheMovie += 1
+        print("cache", self.numberOfCacheMovie)
         
     
     # sort the ranking
@@ -116,8 +121,8 @@ class Server:
         for i in range(self.numberOfMovie):
             self.bandwidth[i] = self.sizeOfMovie[i] * 100 / self.aveSizeVideo * self.aveBandwidth
         
-        sorted(self.rank, cmp=self.sortRankingAlg)
-        sorted(self.cacheRank, cmp=self.sortCacheRankingAlg)
+        sorted(self.rank, key=functools.cmp_to_key(self.sortRankingAlg))
+        sorted(self.cacheRank, key=functools.cmp_to_key(self.sortCacheRankingAlg))
         return True
         
     
@@ -150,6 +155,7 @@ class Server:
     def accessCacheMovie(self, movieId, bandwidth, loadSpeed):
         movieIdx = self.id2CacheIdx[movieId]
         
+        print(self.sizeOfCacheMovie)
         heapq.heappush(self.q, (self.curTime + int(self.sizeOfCacheMovie[movieIdx]/loadSpeed)+1, loadSpeed))
         
         self.load += loadSpeed
@@ -185,16 +191,16 @@ class Server:
         
         temp = self.idx2Id[idxx]
         self.idx2Id[idxx] = self.idx2CacheId[idxy]
-        self.idx2CacheId = temp
+        self.idx2CacheId[idxy] = temp          #peng
         
         temp = self.accessReq[idxx]
         self.accessReq[idxx] = self.accessCacheReq[idxy]
-        self.accessCacheReq = temp
+        self.accessCacheReq[idxy] = temp       #peng
         
         temp = self.sizeOfMovie[idxx]
         self.sizeOfMovie[idxx] = self.sizeOfCacheMovie[idxy]
-        self.sizeOfCacheMovie = temp
+        self.sizeOfCacheMovie[idxy] = temp     #peng
         
         temp = self.bandwidth[idxx]
         self.bandwidth[idxx] = self.cachebandwidth[idxy]
-        self.cachebandwidth = temp
+        self.cachebandwidth[idxy] = temp       #peng
