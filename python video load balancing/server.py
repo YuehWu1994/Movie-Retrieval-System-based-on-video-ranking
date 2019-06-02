@@ -98,8 +98,6 @@ class Server:
         return True
     
     def updateLoad(self):
-        self.curTime += 1
-        
         while not self.q.empty() and self.q[0] <＝ self.curTime:
             self.load -= self.q[0][1]
             heapq.heappop(self.q)

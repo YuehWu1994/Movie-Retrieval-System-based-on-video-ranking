@@ -29,7 +29,7 @@ class LoadBalancingManager:
         hasLoad = False
         
         for i in self.numberOfServer:
-            if(self.serverList.updateLoad() > 0):
+            if(self.serverList[i].updateLoad() > 0):
                 hasLoad = True
                 
         return hasLoad
