@@ -3,6 +3,7 @@
 from server import Server
 import random
 import sys
+from utils import utils as ut
 
 class LoadBalancingManager:
     def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound):
@@ -73,7 +74,7 @@ class LoadBalancingManager:
         for i in range (self.numberOfMovie):
             sv = random.randrange(0, self.numberOfServer)
 
-            movieSize=random.randrange(movieSizeLowerBound, movieSizeUpperBound)
+            movieSize = ut.gaussianSample(movieSizeLowerBound, movieSizeUpperBound)
 
             print("Movie ", i, " is located in server: ", sv)
             # insert the movie to the appropraite server.

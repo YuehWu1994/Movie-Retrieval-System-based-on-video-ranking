@@ -5,7 +5,6 @@
 import heapq
 import functools
 
-
 # server
     # declare cache list
     # which movies are in the cache

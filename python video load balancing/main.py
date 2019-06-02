@@ -11,6 +11,7 @@
 import random
 import configargparse
 from LoadBalancingManager import LoadBalancingManager as LBM
+from utils import utils as ut
 
 def _parse_args():
     p = configargparse.ArgParser()
@@ -25,6 +26,10 @@ def _parse_args():
     args = p.parse_args()
     return args
 
+
+
+    
+
 if __name__ == "__main__": 
     args = _parse_args()
     lbm = LBM(args.numServer, args.numMovie, args.movieSizeLowerBound, args.movieSizeUpperBound)
@@ -35,7 +40,7 @@ if __name__ == "__main__":
         
         # update loadBalanceManager
         if lbm.time >= lbm.timeToUpdate: lbm.update()
-        while not lbm.movieRequest(random.randrange(0, args.numMovie), random.randrange(1, args.loadUpperBound)):
+        while not lbm.movieRequest(random.randrange(0, args.numMovie), ut.gaussianSample(1, args.loadUpperBound)):
             lbm.updateTime()
             lbm.updateLoad()
         lbm.updateTime()
