@@ -123,9 +123,9 @@ class Server:
         
     
     # access the movie by bandwidth and movieID
-    def accessMovie(self, movieId, bandwidth, load):
+    def accessMovie(self, movieId, bandwidth, loadSpeed):
         ## if exceed the load
-        if self.load + load > self.loadCapacity:
+        if self.load + loadSpeed > self.loadCapacity:
             return False
         
         ## if the movie does exist in the server cache
@@ -139,9 +139,9 @@ class Server:
         
         movieIdx = self.id2Idx[movieId]
         
-        heapq.heappush((self.q, self.curTime + int(self.sizeOfMovie[movieIdx]/load)+1), load)
+        heapq.heappush((self.q, self.curTime + int(self.sizeOfMovie[movieIdx]/loadSpeed)+1), loadSpeed)
         
-        self.load += load
+        self.load += loadSpeed
         self.accessReq[movieIdx] += 1
         self.bandwidth[movieIdx] += bandwidth
         self.aveBandwidth = self.aveBandwidth + bandwidth/self.numberOfMovie
@@ -158,8 +158,6 @@ class Server:
         
         
     def updateLoad(self):
-        self.curTime += 1
-        
         while not self.q.empty() and self.q[0] <＝ self.curTime:
             self.load -= self.q[0][1]
             heapq.heappop(self.q)

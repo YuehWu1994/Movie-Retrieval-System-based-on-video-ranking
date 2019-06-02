@@ -1,28 +1,78 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import server
+from server import Server
 import random
+import sys
 
 class LoadBalancingManager:
     def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound):
-        self.time = 0
-        self.serverList = [server(20, 20, 20)] * numberOfServer
+        self.serverList = [Server(20, 20, 20)] * numberOfServer
         self.numberOfServer = numberOfServer
         self.numberOfMovie = numberOfMovie
+        self.time = 0
+        self.updateRate=60
+        self.timeToUpdate=60
         
         # create movieId to list of server mapping <int, vector<int>>
         self.movieIdTable = dict()
+
+        # create movieId to list of server in cache mapping {movieId : [list of server]}.
+        self.cacheTable = dict()
+
+        # record movies {movieId : movieSize}
+        self.movies = dict()
         
         # distribute movies to servers (location and size of movie are randomly distributed)
         self.distributedMovie(movieSizeLowerBound, movieSizeUpperBound)
-    
+
+    def updateTime():
+        self.time+=1
+        for sv in self.serverList: sv.curTime+=1
+
+    def update():
+        # update ranking and cache for each server
+        for sv in self.serverList:
+            sv.updateRanking()
+            sv.updataCache()
+
+        # update cacheTable
+        self.cacheTable = dict()
+        for movieId in self.movieIdTable:
+            for sv in self.movieIdTable[movieId]:
+                if movieId in sv.id2CacheIdx:
+                    if not movieId in self.cacheTable:
+                        self.cacheTable[movieId]=[]
+                    self.cacheTable[movieId].append(sv)
+
+        # replicate top ranking movies.
+        self.replicateMovie()
+        self.timeToUpdate+=self.updateRate
+
+    def replicateMovie():
+        for sv in self.serverList:
+            hotMovieId=sv.rank[0]
+            svId = random.randint(0, self.numberOfServer)
+            self.serverList[svId].insertMovie(hotMovieId, self.movies[hotMovieId])
+
     def distributedMovie(self, movieSizeLowerBound, movieSizeUpperBound):
         for i in self.numberOfMovie:
             sv = random.randint(0, self.numberOfServer)
-            self.serverList[sv].insertMovie(i, random.randint(movieSizeLowerBound, movieSizeUpperBound))
+
+            movieSize=random.randint(movieSizeLowerBound, movieSizeUpperBound)
+
+            # insert the movie to the appropraite server.
+            while not self.serverList[sv].insertMovie(i, movieSize):
+                sv = random.randint(0, self.numberOfServer)
+
+            # record the movie
+            self.movies[i]=movieSize
             
             # record in movieIdTable
-            self.movieIdTable[i] = [sv] 
+            self.movieIdTable[i] = [sv]
+
+            # if the movie is in the cache, record it in self.cacheTable.
+            if i in self.serverList[sv].id2CacheIdx:
+                self.cacheTable[i] = [sv]
         
     
     def updateLoad(self):
@@ -46,10 +96,29 @@ class LoadBalancingManager:
     
     ### TODO: distribute movies to servers ###
     def movieRequest(self, movieID, load):
+        # Check if the cache in the server has the requested movie
+        if movieId in self.cacheTable:
+            minload=sys.maxsize
+            target_sv=None
+            # Get the server that has minimum load
+            for sv in self.cacheTable[movieId]:
+                if sv.load < minload:
+                    minload=sv.load
+                    target_sv=sv
+            if not target_sv == None and target_sv.accessMovie(movieID, load, 30*load):
+                return True
+
+        # Check if any server could handle the requested movie
+        minload=sys.maxsize
+        target_sv=None
+        # Get the server that has minimum load
+        for sv in self.movieIdTable[movieId]:
+            if sv.load < minload:
+                minload=sv.load
+                target_sv=sv
+        if not target_sv == None and target_sv.accessMovie(movieID, load, load):
+                return True
         return False
-    
-    
-    
     
     # every second, store/ update load from every server
     
@@ -65,7 +134,10 @@ class LoadBalancingManager:
             # movie store in cache or disk
             
         # declare cache table
-        # udpate cache table
+        # {movidId: [server1, server2, ...]}, servers that own the movies 
+
+        # update the cache table after updateRanking in server
+
 
     # main: 
         # send movieRequest to loadbalancingManager (number of movie, number of server)
@@ -77,9 +149,9 @@ class LoadBalancingManager:
     # de-replicate
         # number of request in specific time interval 
         
-    # cache access time
-    # disk access time
-    # request access time
+    # cache access time 1
+    # disk access time 30
+    # request access time 1 
         
             
         
