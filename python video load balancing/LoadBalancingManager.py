@@ -62,6 +62,9 @@ class LoadBalancingManager:
 
     def replicateMovie(self):
         for sv in self.serverList:
+            if len(sv.rank) == 0:
+                continue
+            
             hotMovieId=sv.rank[0]
             svId = random.randrange(0, self.numberOfServer)
             self.serverList[svId].insertMovie(hotMovieId, self.movies[hotMovieId])

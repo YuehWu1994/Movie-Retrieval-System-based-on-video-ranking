@@ -55,18 +55,17 @@ class Server:
     # assign movie to this server
     def insertMovie(self, movieId, movieSize):
         
-        
         ## if the movie already exists in the server
         if movieId in self.id2Idx.keys() or movieId in self.id2CacheIdx.keys():
             return False
         
         ## if  cache has space 
-        if self.numberOfCacheMovie < self.movieCacheCapacity and self.aveCacheSizeVideo * self.numberOfCacheMovie + movieSize <= self.serverCacheCapacity:
+        if self.numberOfCacheMovie < self.movieCacheCapacity and self.numberOfMovie < self.movieCapacity and self.aveCacheSizeVideo * self.numberOfCacheMovie + movieSize <= self.serverCacheCapacity:
             self.insertMovieInCache(movieId, movieSize)
             return True
         
         # if exceed the movie capacity and total length of movie
-        if self.numberOfMovie == self.movieCapacity or self.aveSizeVideo * self.numberOfMovie + movieSize > self.serverDiskCapacity:
+        if self.numberOfMovie >= self.movieCapacity or self.aveSizeVideo * self.numberOfMovie + movieSize > self.serverDiskCapacity:
             return False
         
         self.id2Idx[movieId] = self.numberOfMovie 
@@ -118,6 +117,7 @@ class Server:
             return False
         
         # update bandwidth
+        print(self.numberOfMovie, self.movieCapacity)
         for i in range(self.numberOfMovie):
             self.bandwidth[i] = self.sizeOfMovie[i] * 100 / self.aveSizeVideo * self.aveBandwidth
         
@@ -174,6 +174,9 @@ class Server:
     
     # exchange the lowest rank movie in cache with the highest rank movie in disk
     def updateCache(self):
+        if(len(self.rank) == 0 or len(self.cacheRank) == 0):
+            return
+        
         ## x,y are movie ID
         x = self.rank[0] 
         y = self.cacheRank[self.numberOfCacheMovie-1]
