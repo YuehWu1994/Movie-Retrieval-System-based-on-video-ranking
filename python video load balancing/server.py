@@ -121,6 +121,7 @@ class Server:
         
         self.rank = sorted(self.rank, key=functools.cmp_to_key(self.sortRankingAlg))
         self.cacheRank = sorted(self.cacheRank, key=functools.cmp_to_key(self.sortCacheRankingAlg))
+
         return True
         
     
