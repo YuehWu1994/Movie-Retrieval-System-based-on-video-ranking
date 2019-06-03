@@ -6,10 +6,11 @@ import sys
 from utils import utils as ut
 
 class Master:
-    def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound, debug):
+    def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound, cacheDiskSpeedRatio, debug):
         # debug mode
         self.debug = debug
         
+        self.cacheDiskSpeedRatio = cacheDiskSpeedRatio
         self.serverList = []
         self.numberOfServer = 0
         
@@ -20,6 +21,7 @@ class Master:
         self.time = 0
         self.updateRate=60
         self.timeToUpdate=60
+        self.replicateTime = 0
         
         # create movieId to list of server mapping <int, vector<int>>
         self.movieIdTable = dict()
@@ -61,7 +63,7 @@ class Master:
         self.timeToUpdate+=self.updateRate
         
     def createServer(self):
-        sv = Server(20, 50000, 500, 0, self.debug)
+        sv = Server(20, 50000, 500, self.cacheDiskSpeedRatio, 0, self.debug)
         self.serverList.append(sv)
         self.numberOfServer += 1
 
@@ -73,6 +75,7 @@ class Master:
             hotMovieId=sv.rank[0]
             svId = random.randrange(0, self.numberOfServer)
             self.serverList[svId].insertMovie(hotMovieId, self.movies[hotMovieId])
+            self.replicateTime += 1
 
     def distributedMovie(self, movieSizeLowerBound, movieSizeUpperBound):
         for i in range (self.numberOfMovie):

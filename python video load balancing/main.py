@@ -24,21 +24,32 @@ def _parse_args():
     p.add('--movieSizeUpperBound', type=int, required=False, default=5000, help="upper bound of movie size")
     p.add('--movieSizeLowerBound', type=int, required=False, default=1000, help="lower bound of movie size")
     p.add('--loadUpperBound', type=int, required=False, default=200, help="upper bound of requesting load")
+    p.add('--cacheDiskSpeedRatio', type=int, required=False, default=30, help="speed ratio of cache and disk")
     p.add('--debug', type=bool, required=False, default=False, help="Print current time and load status if debug is set to true")
+    p.add('--requestDistribution', type=str, required=False, default="Normal", help="Apply which probability distribution models on movie request")
     args = p.parse_args()
     return args
 
 
 def one_test(args):
-    ms = MS(args.numServer, args.numMovie, args.movieSizeLowerBound, args.movieSizeUpperBound, args.debug)
-
+    ms = MS(args.numServer, args.numMovie, args.movieSizeLowerBound, args.movieSizeUpperBound, args.cacheDiskSpeedRatio, args.debug)
     req = args.numRequest
+    
+    
+    sample = []
+    if args.requestDistribution == "Normal" :
+        # Assume movie requests are uniformly distributed
+        sample = ut.uniformSample(req, 0, args.numMovie-1)
+    else: 
+        # Some popular movies have extensive request. Apply exponential distribution on popularity 
+        sample = ut.expSample(req, 0, args.numMovie-1)
+        
     for i in range(req):
         if(args.debug): print("Request: ", i)
         
         # update loadBalanceManager
         if ms.time >= ms.timeToUpdate: ms.update()
-        while not ms.movieRequest(random.randrange(0, args.numMovie), ut.gaussianSample(1, args.loadUpperBound)):
+        while not ms.movieRequest(round(sample[i]), ut.gaussianSample(1, args.loadUpperBound)):
             ms.updateTime()
             ms.updateLoad()
         ms.updateTime()
@@ -48,18 +59,22 @@ def one_test(args):
     while ms.updateLoad(): ms.updateTime()
         
     print("Take ", ms.time, " time unit to finish ", req, " movie requests")    
-    return ms.time
+    return ms.time, ms.replicateTime
 
     
 
 if __name__ == "__main__": 
     args = _parse_args()
     numberOfTest = 10
-    t = []
+    time, replicate = [], []
     
     for i in range(numberOfTest):
-        t.append(one_test(args))
+        t, rep = one_test(args)
+        time.append(t)
+        replicate.append(rep)
     
-    t = np.array(t)
+    time = np.array(time)
+    replicate = np.array(replicate)
 
-    print("Average access time: ", (np.sum(t) - np.min(t) - np.max(t)) / (numberOfTest-2))
+    print("Average access time: ", (np.sum(time) - np.min(time) - np.max(time)) / (numberOfTest-2))
+    print("Average replication: ", (np.sum(replicate) - replicate[np.argmin(time)] - replicate[np.argmax(time)]) / (numberOfTest-2))

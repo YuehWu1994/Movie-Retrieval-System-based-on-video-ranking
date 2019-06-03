@@ -13,7 +13,7 @@ import functools
     ## means I added
     
 class Server:
-    def __init__(self, movieCapacity, serverDiskCapacity, loadCapacity, t, debug):
+    def __init__(self, movieCapacity, serverDiskCapacity, loadCapacity, cacheDiskSpeedRatio, t, debug):
         # debug mode
         self.debug = debug
         
@@ -29,7 +29,7 @@ class Server:
         self.totalCacheSize = 0                        ##
         self.numberOfMovie = 0
         self.numberOfCacheMovie = 0                    ##
-        self.cacheDiskSpeedRatio = 30                   # assuem cache transmission speed is 30 times faster than disk
+        self.cacheDiskSpeedRatio = cacheDiskSpeedRatio  # assuem cache transmission speed is 30 times faster than disk
         
         self.curTime = t
         self.q = []                                     # use queue to store accessing time
@@ -196,16 +196,16 @@ class Server:
         
         temp = self.idx2Id[idxx]
         self.idx2Id[idxx] = self.idx2CacheId[idxy]
-        self.idx2CacheId[idxy] = temp          #peng
+        self.idx2CacheId[idxy] = temp
         
         temp = self.accessReq[idxx]
         self.accessReq[idxx] = self.accessCacheReq[idxy]
-        self.accessCacheReq[idxy] = temp       #peng
+        self.accessCacheReq[idxy] = temp
         
         temp = self.sizeOfMovie[idxx]
         self.sizeOfMovie[idxx] = self.sizeOfCacheMovie[idxy]
-        self.sizeOfCacheMovie[idxy] = temp     #peng
+        self.sizeOfCacheMovie[idxy] = temp
         
         temp = self.bandwidth[idxx]
         self.bandwidth[idxx] = self.cachebandwidth[idxy]
-        self.cachebandwidth[idxy] = temp       #peng
+        self.cachebandwidth[idxy] = temp
