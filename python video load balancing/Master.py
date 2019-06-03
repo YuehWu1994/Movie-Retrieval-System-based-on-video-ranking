@@ -5,8 +5,11 @@ import random
 import sys
 from utils import utils as ut
 
-class LoadBalancingManager:
-    def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound):
+class Master:
+    def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound, debug):
+        # debug mode
+        self.debug = debug
+        
         self.serverList = []
         self.numberOfServer = 0
         
@@ -30,12 +33,13 @@ class LoadBalancingManager:
         # distribute movies to servers (location and size of movie are randomly distributed)
         self.distributedMovie(movieSizeLowerBound, movieSizeUpperBound)
         
+    
 
     def updateTime(self):
         self.time +=1
         for sv in self.serverList: sv.curTime+=1
         
-        print("Current Time is: ", self.time)
+        if self.debug: print("Current Time is: ", self.time)
 
     def update(self):
         # update ranking and cache for each server
@@ -57,7 +61,7 @@ class LoadBalancingManager:
         self.timeToUpdate+=self.updateRate
         
     def createServer(self):
-        sv = Server(20, 50000, 500, 0)
+        sv = Server(20, 50000, 500, 0, self.debug)
         self.serverList.append(sv)
         self.numberOfServer += 1
 
@@ -76,7 +80,7 @@ class LoadBalancingManager:
 
             movieSize = ut.gaussianSample(movieSizeLowerBound, movieSizeUpperBound)
 
-            print("Movie ", i, " is located in server: ", sv)
+            if self.debug: print("Movie ", i, " is located in server: ", sv)
             # insert the movie to the appropraite server.
             cnt = 0
             while not self.serverList[sv].insertMovie(i, movieSize):                    
@@ -98,7 +102,7 @@ class LoadBalancingManager:
             if i in self.serverList[sv].id2CacheIdx:
                 self.cacheTable[i] = [sv]
         
-        print("=====Distribute Movie: DONE===== \n")
+        if self.debug: print("=====Distribute Movie: DONE===== \n")
         
     
     def updateLoad(self):
@@ -107,10 +111,10 @@ class LoadBalancingManager:
         for i in range (self.numberOfServer):
             unFinishLoad = self.serverList[i].updateLoad()
             if(unFinishLoad > 0):
-                print("server ", i, " still has ", unFinishLoad, " load")
+                if self.debug: print("server ", i, " still has ", unFinishLoad, " load")
                 hasLoad = True
         
-        print("\n")        
+        if self.debug: print("\n")        
         return hasLoad
     
     def getNumberOfServer(self):
@@ -124,7 +128,7 @@ class LoadBalancingManager:
     
     
     def movieRequest(self, movieID, load):
-        print("Request movie ", movieID, ". Load speed is: ", load)
+        if self.debug: print("Request movie ", movieID, ". Load speed is: ", load)
         
         # Check if the cache in the server has the requested movie
         if movieID in self.cacheTable:
@@ -136,7 +140,7 @@ class LoadBalancingManager:
                     minload=self.serverList[sv].load
                     target_sv=sv
             if not target_sv == None and self.serverList[target_sv].accessMovie(movieID, load, load):
-                print("Server ", target_sv, " use cache to transmit")
+                if self.debug: print("Server ", target_sv, " use cache to transmit")
                 return True
 
         # Check if any server could handle the requested movie
@@ -148,7 +152,7 @@ class LoadBalancingManager:
                 minload=self.serverList[sv].load
                 target_sv=sv
         if not target_sv == None and self.serverList[target_sv].accessMovie(movieID, load, load):
-            print("Server ", target_sv, " use disk to transmit")
+            if self.debug: print("Server ", target_sv, " use disk to transmit")
             return True
         
         return False

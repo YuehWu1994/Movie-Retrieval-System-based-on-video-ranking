@@ -13,7 +13,11 @@ import functools
     ## means I added
     
 class Server:
-    def __init__(self, movieCapacity, serverDiskCapacity, loadCapacity, t):
+    def __init__(self, movieCapacity, serverDiskCapacity, loadCapacity, t, debug):
+        # debug mode
+        self.debug = debug
+        
+        
         self.loadCapacity = loadCapacity                # upper bound of load
         self.serverDiskCapacity = serverDiskCapacity    # upper bound of disk size 
         self.movieCapacity = movieCapacity              # upper bound of number of movie 
@@ -96,7 +100,7 @@ class Server:
         
         self.numberOfMovie += 1
         self.numberOfCacheMovie += 1
-        print("cache", self.numberOfCacheMovie)
+        if self.debug : print("cache", self.numberOfCacheMovie)
         
     
     # sort the ranking
