@@ -119,8 +119,8 @@ class Server:
         for i in range(self.numberOfMovie):
             self.bandwidth[i] = self.sizeOfMovie[i] * 100 / self.aveSizeVideo * self.aveBandwidth
         
-        sorted(self.rank, key=functools.cmp_to_key(self.sortRankingAlg))
-        sorted(self.cacheRank, key=functools.cmp_to_key(self.sortCacheRankingAlg))
+        self.rank=sorted(self.rank, key=functools.cmp_to_key(self.sortRankingAlg))
+        self.cacheRank=sorted(self.cacheRank, key=functools.cmp_to_key(self.sortCacheRankingAlg))
         return True
         
     
@@ -154,7 +154,7 @@ class Server:
         movieIdx = self.id2CacheIdx[movieId]
         
         #print(self.sizeOfCacheMovie)
-        heapq.heappush(self.q, (self.curTime + int(self.sizeOfCacheMovie[movieIdx]/loadSpeed)+1, loadSpeed))
+        heapq.heappush(self.q, (self.curTime + int(self.sizeOfCacheMovie[movieIdx]/loadSpeed*self.cacheDiskSpeedRatio)+1, loadSpeed))
         
         self.load += loadSpeed
         self.accessCacheReq[movieIdx] += 1
