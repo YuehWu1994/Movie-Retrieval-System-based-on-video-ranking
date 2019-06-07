@@ -8,7 +8,6 @@
 # Cache throughput: 17GB/s
 # movie 1GB ~ 5GB
 
-import random
 import configargparse
 from Master import Master as MS
 from utils import utils as ut
@@ -18,8 +17,8 @@ def _parse_args():
     p = configargparse.ArgParser()
     p.add('-c', '--config',required=False, is_config_file=True, help='config file path')
     p.add('--numServer',type=int, required=False, default=2, help='number of server')
-    p.add('--numMovie', type=int, required=False, default=30, help="number of movie")
-    p.add('--numRequest', type=int, required=False, default=30, help="number of movie access request")
+    p.add('--numMovie', type=int, required=False, default=10, help="number of movie")
+    p.add('--numRequest', type=int, required=False, default=100, help="number of movie access request")
     
     p.add('--movieSizeUpperBound', type=int, required=False, default=5000, help="upper bound of movie size")
     p.add('--movieSizeLowerBound', type=int, required=False, default=1000, help="lower bound of movie size")
@@ -49,7 +48,11 @@ def one_test(args):
         
         # update loadBalanceManager
         if ms.time >= ms.timeToUpdate: ms.update()
-        while not ms.movieRequest(round(sample[i]), ut.gaussianSample(1, args.loadUpperBound)):
+        
+        m = round(sample[i])
+        l = ut.gaussianSample(1+50, args.loadUpperBound-50)
+        
+        while not ms.movieRequest(m, l):
             ms.updateTime()
             ms.updateLoad()
         ms.updateTime()
@@ -59,6 +62,8 @@ def one_test(args):
     while ms.updateLoad(): ms.updateTime()
         
     print("Take ", ms.time, " time unit to finish ", req, " movie requests")    
+    print("Request Fail Count: ", ms.requestFailCnt, " CacheTrans: ", ms.cacheTrans, " DiskTrans: ", ms.diskTrans)
+    print("Cache try: ", ms.cacheTry, " Disk try: ", ms.diskTry)
     return ms.time, ms.replicateTime
 
     

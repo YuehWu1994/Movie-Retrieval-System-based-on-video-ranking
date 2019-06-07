@@ -98,22 +98,57 @@ class Server:
         self.aveCacheSizeVideo = (self.aveCacheSizeVideo * self.numberOfCacheMovie + movieSize) / (self.numberOfCacheMovie + 1)
         self.aveCacheBandwidth = (self.aveCacheBandwidth * self.numberOfCacheMovie) / (self.numberOfCacheMovie + 1)
         
-        self.numberOfMovie += 1
+        #self.numberOfMovie += 1    # not sure
         self.numberOfCacheMovie += 1
         if self.debug : print("cache", self.numberOfCacheMovie)
         
+    def cmp_to_key(mycmp):
+        class K(object):
+            def __init__(self, obj, *args):
+                self.obj = obj
+            def __lt__(self, other):
+                return mycmp(self.obj, other.obj) < 0
+            def __gt__(self, other):
+                return mycmp(self.obj, other.obj) > 0
+            def __eq__(self, other):
+                return mycmp(self.obj, other.obj) == 0
+            def __le__(self, other):
+                return mycmp(self.obj, other.obj) <= 0
+            def __ge__(self, other):
+                return mycmp(self.obj, other.obj) >= 0
+            def __ne__(self, other):
+                return mycmp(self.obj, other.obj) != 0
+        return K
     
+    
+        
     # sort the ranking
     def sortRankingAlg(self, x, y):
         xIdx = self.id2Idx[x]
         yIdx = self.id2Idx[y]
-        return self.accessReq[xIdx] > self.accessReq[yIdx] or (
-                self.accessReq[xIdx] == self.accessReq[yIdx] and self.bandwidth[xIdx] > self.bandwidth[yIdx])
+        
+        if self.accessReq[xIdx] > self.accessReq[yIdx] or (self.accessReq[xIdx] == self.accessReq[yIdx] and self.bandwidth[xIdx] > self.bandwidth[yIdx]):
+            return -1
+        elif self.accessReq[xIdx] < self.accessReq[yIdx] or (self.accessReq[xIdx] == self.accessReq[yIdx] and self.bandwidth[xIdx] < self.bandwidth[yIdx]):
+            return 1
+        else: 
+            return 0
+        #return self.accessReq[xIdx] < self.accessReq[yIdx] or (
+        #self.accessReq[xIdx] == self.accessReq[yIdx] and self.bandwidth[xIdx] < self.bandwidth[yIdx])
+    
+    
     def sortCacheRankingAlg(self, x, y):
         xIdx = self.id2CacheIdx[x]
         yIdx = self.id2CacheIdx[y]
-        return self.accessCacheReq[xIdx] > self.accessCacheReq[yIdx] or (
-                self.accessCacheReq[xIdx] == self.accessCacheReq[yIdx] and self.cachebandwidth[xIdx] > self.cachebandwidth[yIdx])
+        if self.accessCacheReq[xIdx] > self.accessCacheReq[yIdx] or (self.accessCacheReq[xIdx] == self.accessCacheReq[yIdx] and self.cachebandwidth[xIdx] > self.cachebandwidth[yIdx]):
+            return -1
+        elif self.accessCacheReq[xIdx] < self.accessCacheReq[yIdx] or (self.accessCacheReq[xIdx] == self.accessCacheReq[yIdx] and self.cachebandwidth[xIdx] < self.cachebandwidth[yIdx]):
+            return 1
+        else: 
+            return 0
+    
+    
+    
     
     def updateRanking(self):
         if self.numberOfMovie == 0 or self.aveBandwidth == 0:
@@ -125,20 +160,27 @@ class Server:
         
         self.rank = sorted(self.rank, key=functools.cmp_to_key(self.sortRankingAlg))
         self.cacheRank = sorted(self.cacheRank, key=functools.cmp_to_key(self.sortCacheRankingAlg))
+        #self.cacheRank = sorted(self.cacheRank, key=lambda x: self.accessReq[self.id2Idx[x]])
 
         return True
+    
+    
+        # self.id2CacheIdx self.accessCacheReq self.cacheRank
         
     
     # access the movie by bandwidth and movieID
     def accessMovie(self, movieId, bandwidth, loadSpeed):
         ## if exceed the load
         if self.load + loadSpeed > self.loadCapacity:
+            #print("exceed load")
             return False
         
+        '''
         ## if the movie does exist in the server cache
         if movieId in self.id2CacheIdx.keys():
             self.accessCacheMovie(movieId, loadSpeed, loadSpeed)
             return True
+        '''
         ## if the movie doesn't exist in the server
         if movieId not in self.id2Idx.keys():
             return False
@@ -156,15 +198,20 @@ class Server:
     
     
     def accessCacheMovie(self, movieId, bandwidth, loadSpeed):
+        if self.load + loadSpeed > self.loadCapacity:
+            return False
+        
         movieIdx = self.id2CacheIdx[movieId]
         
         #print(self.sizeOfCacheMovie)
-        heapq.heappush(self.q, (self.curTime + int(self.sizeOfCacheMovie[movieIdx]/loadSpeed*self.cacheDiskSpeedRatio)+1, loadSpeed))
+        heapq.heappush(self.q, (self.curTime + int(self.sizeOfCacheMovie[movieIdx]/(loadSpeed*self.cacheDiskSpeedRatio))+1, loadSpeed))
         
         self.load += loadSpeed
         self.accessCacheReq[movieIdx] += 1
         self.cachebandwidth[movieIdx] += bandwidth
         self.aveCacheBandwidth = self.aveCacheBandwidth + bandwidth/self.numberOfCacheMovie
+        
+        return True
         
         
     def updateLoad(self):
@@ -183,12 +230,19 @@ class Server:
         x = self.rank[0] 
         y = self.cacheRank[self.numberOfCacheMovie-1]
         
-        self.rank[0] = y
-        self.cacheRank[self.numberOfCacheMovie-1] = x
-        
         ## index x & Index y
         idxx = self.id2Idx[x]
         idxy = self.id2CacheIdx[y]
+        
+        ## If number of request of the lowest rank movie in cache is larger than highest rank movie in disk, don't udpate cache
+        if self.accessCacheReq[idxy] > self.accessReq[idxx] :        
+            return
+        
+        
+        self.rank[0] = y
+        self.cacheRank[self.numberOfCacheMovie-1] = x
+        
+        
         del self.id2Idx[x]
         del self.id2CacheIdx[y]
         self.id2Idx[y] = idxx

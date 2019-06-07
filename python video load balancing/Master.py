@@ -19,8 +19,8 @@ class Master:
             
         self.numberOfMovie = numberOfMovie
         self.time = 0
-        self.updateRate=60
-        self.timeToUpdate=60
+        self.updateRate=10
+        self.timeToUpdate=10
         self.replicateTime = 0
         
         # create movieId to list of server mapping <int, vector<int>>
@@ -35,6 +35,12 @@ class Master:
         # distribute movies to servers (location and size of movie are randomly distributed)
         self.distributedMovie(movieSizeLowerBound, movieSizeUpperBound)
         
+        self.requestFailCnt = 0
+        self.diskTrans = 0
+        self.cacheTrans = 0
+        self.diskTry = 0
+        self.cacheTry = 0
+        
     
 
     def updateTime(self):
@@ -43,12 +49,16 @@ class Master:
         
         if self.debug: print("Current Time is: ", self.time)
 
-    def update(self):
-        # update ranking and cache for each server
+    def update(self):        
+        # update ranking and cache for each server          
+        
+        
         for sv in self.serverList:
+            #print("updata at time: ",self.time)
             sv.updateRanking()
             sv.updateCache()
 
+        
         # update cacheTable
         self.cacheTable = dict()
         for movieId in self.movieIdTable:
@@ -57,7 +67,9 @@ class Master:
                     if not movieId in self.cacheTable:
                         self.cacheTable[movieId]=[]
                     self.cacheTable[movieId].append(sv)
-
+        
+        
+        
         # replicate top ranking movies.
         self.replicateMovie()
         self.timeToUpdate+=self.updateRate
@@ -68,14 +80,25 @@ class Master:
         self.numberOfServer += 1
 
     def replicateMovie(self):
+        hotMovieId = 0
         for sv in self.serverList:
-            if len(sv.rank) == 0:
+            if len(sv.cacheRank) != 0:
+                hotMovieId = sv.cacheRank[0]
+            elif len(sv.rank) != 0: 
+                hotMovieId=sv.rank[0]
+            else:
                 continue
+                        
             
-            hotMovieId=sv.rank[0]
             svId = random.randrange(0, self.numberOfServer)
-            self.serverList[svId].insertMovie(hotMovieId, self.movies[hotMovieId])
-            self.replicateTime += 1
+            if(self.serverList[svId].insertMovie(hotMovieId, self.movies[hotMovieId])):
+                # insert in movieIdTable and cache table
+                self.movieIdTable[hotMovieId].append(svId)
+            
+                if hotMovieId in self.serverList[svId].id2CacheIdx:
+                    self.cacheTable[hotMovieId].append(svId)           
+            
+                self.replicateTime += 1
 
     def distributedMovie(self, movieSizeLowerBound, movieSizeUpperBound):
         for i in range (self.numberOfMovie):
@@ -142,9 +165,12 @@ class Master:
                 if self.serverList[sv].load < minload:
                     minload=self.serverList[sv].load
                     target_sv=sv
-            if not target_sv == None and self.serverList[target_sv].accessMovie(movieID, load, load):
+            if not target_sv == None and self.serverList[target_sv].accessCacheMovie(movieID, load, load):
                 if self.debug: print("Server ", target_sv, " use cache to transmit")
+                self.cacheTrans += 1
                 return True
+            self.cacheTry += 1
+            
 
         # Check if any server could handle the requested movie
         minload=sys.maxsize
@@ -154,9 +180,15 @@ class Master:
             if self.serverList[sv].load < minload:
                 minload=self.serverList[sv].load
                 target_sv=sv
+        
+        
         if not target_sv == None and self.serverList[target_sv].accessMovie(movieID, load, load):
             if self.debug: print("Server ", target_sv, " use disk to transmit")
+            self.diskTrans += 1
             return True
+        self.diskTry += 1
+        
+        self.requestFailCnt += 1
         
         return False
     
