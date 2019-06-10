@@ -26,12 +26,13 @@ def _parse_args():
     p.add('--cacheDiskSpeedRatio', type=int, required=False, default=30, help="speed ratio of cache and disk")
     p.add('--debug', type=bool, required=False, default=False, help="Print current time and load status if debug is set to true")
     p.add('--requestDistribution', type=str, required=False, default="Normal", help="Apply which probability distribution models on movie request")
+    p.add('--ranking', type=int, required=False, default=1, help="use ranking algorithm or not")
     args = p.parse_args()
     return args
 
 
 def one_test(args):
-    ms = MS(args.numServer, args.numMovie, args.movieSizeLowerBound, args.movieSizeUpperBound, args.cacheDiskSpeedRatio, args.debug)
+    ms = MS(args.numServer, args.numMovie, args.movieSizeLowerBound, args.movieSizeUpperBound, args.cacheDiskSpeedRatio, args.debug, args.ranking)
     req = args.numRequest
     
     
@@ -50,7 +51,7 @@ def one_test(args):
         if ms.time >= ms.timeToUpdate: ms.update()
         
         m = round(sample[i])
-        l = ut.gaussianSample(1+50, args.loadUpperBound-50)
+        l = ut.gaussianSample(1, args.loadUpperBound)
         
         while not ms.movieRequest(m, l):
             ms.updateTime()
@@ -62,15 +63,15 @@ def one_test(args):
     while ms.updateLoad(): ms.updateTime()
         
     print("Take ", ms.time, " time unit to finish ", req, " movie requests")    
-    print("Request Fail Count: ", ms.requestFailCnt, " CacheTrans: ", ms.cacheTrans, " DiskTrans: ", ms.diskTrans)
-    print("Cache try: ", ms.cacheTry, " Disk try: ", ms.diskTry)
+    #print("Request Fail Count: ", ms.requestFailCnt, " CacheTrans: ", ms.cacheTrans, " DiskTrans: ", ms.diskTrans)
+    #print("Cache try: ", ms.cacheTry, " Disk try: ", ms.diskTry)
     return ms.time, ms.replicateTime
 
     
 
 if __name__ == "__main__": 
     args = _parse_args()
-    numberOfTest = 10
+    numberOfTest = 50
     time, replicate = [], []
     
     for i in range(numberOfTest):

@@ -6,9 +6,10 @@ import sys
 from utils import utils as ut
 
 class Master:
-    def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound, cacheDiskSpeedRatio, debug):
-        # debug mode
+    def __init__(self, numberOfServer, numberOfMovie, movieSizeLowerBound, movieSizeUpperBound, cacheDiskSpeedRatio, debug, ranking):
+        # debug mode, ranking
         self.debug = debug
+        self.ranking = ranking
         
         self.cacheDiskSpeedRatio = cacheDiskSpeedRatio
         self.serverList = []
@@ -50,28 +51,29 @@ class Master:
         if self.debug: print("Current Time is: ", self.time)
 
     def update(self):        
-        # update ranking and cache for each server          
         
-        
-        for sv in self.serverList:
-            #print("updata at time: ",self.time)
-            sv.updateRanking()
-            sv.updateCache()
-
-        
-        # update cacheTable
-        self.cacheTable = dict()
-        for movieId in self.movieIdTable:
-            for sv in self.movieIdTable[movieId]:
-                if movieId in self.serverList[sv].id2CacheIdx:
-                    if not movieId in self.cacheTable:
-                        self.cacheTable[movieId]=[]
-                    self.cacheTable[movieId].append(sv)
+        if self.ranking:
+            # update ranking and cache for each server          
+            for sv in self.serverList:
+                #print("updata at time: ",self.time)
+                sv.updateRanking()
+                sv.updateCache()
+    
+            
+            # update cacheTable
+            self.cacheTable = dict()
+            for movieId in self.movieIdTable:
+                for sv in self.movieIdTable[movieId]:
+                    if movieId in self.serverList[sv].id2CacheIdx:
+                        if not movieId in self.cacheTable:
+                            self.cacheTable[movieId]=[]
+                        self.cacheTable[movieId].append(sv)
         
         
         
         # replicate top ranking movies.
-        self.replicateMovie()
+        for i in range(1):
+            self.replicateMovie()
         self.timeToUpdate+=self.updateRate
         
     def createServer(self):
@@ -82,14 +84,16 @@ class Master:
     def replicateMovie(self):
         hotMovieId = 0
         for sv in self.serverList:
+            if sv.load <= 450:
+                continue
+            
             if len(sv.cacheRank) != 0:
                 hotMovieId = sv.cacheRank[0]
             elif len(sv.rank) != 0: 
                 hotMovieId=sv.rank[0]
             else:
                 continue
-                        
-            
+                                   
             svId = random.randrange(0, self.numberOfServer)
             if(self.serverList[svId].insertMovie(hotMovieId, self.movies[hotMovieId])):
                 # insert in movieIdTable and cache table

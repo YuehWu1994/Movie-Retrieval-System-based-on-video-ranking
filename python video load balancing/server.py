@@ -235,7 +235,7 @@ class Server:
         idxy = self.id2CacheIdx[y]
         
         ## If number of request of the lowest rank movie in cache is larger than highest rank movie in disk, don't udpate cache
-        if self.accessCacheReq[idxy] > self.accessReq[idxx] :        
+        if self.accessCacheReq[idxy] * 1.5 > self.accessReq[idxx] :        
             return
         
         
