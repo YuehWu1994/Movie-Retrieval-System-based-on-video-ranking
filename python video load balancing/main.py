@@ -71,7 +71,7 @@ def one_test(args):
 
 if __name__ == "__main__": 
     args = _parse_args()
-    numberOfTest = 50
+    numberOfTest = 10
     time, replicate = [], []
     
     for i in range(numberOfTest):
@@ -83,4 +83,4 @@ if __name__ == "__main__":
     replicate = np.array(replicate)
 
     print("Average access time: ", (np.sum(time) - np.min(time) - np.max(time)) / (numberOfTest-2))
-    print("Average replication: ", (np.sum(replicate) - replicate[np.argmin(time)] - replicate[np.argmax(time)]) / (numberOfTest-2))
+    

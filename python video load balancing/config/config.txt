@@ -1,11 +1,11 @@
 numServer = 20
-numMovie = 10000
+numMovie = 1000
 numRequest = 1000
 movieSizeUpperBound = 5000
 movieSizeLowerBound = 1000
 loadUpperBound = 200
 cacheDiskSpeedRatio = 100
 requestDistribution = Exp
-ranking 0
+ranking 1
 
 
